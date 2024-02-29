@@ -197,8 +197,10 @@ SET_COMMAND = {
     "state":
     lambda arg="normal": [(5, 0xf0, SET_AC_STATE[arg])],
     "temp":
-    lambda arg=16.0: [(6, 0x0f, max(min(0xf + 16 - int(float(arg)), 0xf), 0x0)
-                       ), (8, 0x02, 0x00 if float(arg) % 1 < .5 else 0x02)],
+    lambda arg=16.0: [
+                        (6, 0x0f, max(min(0xf + 16 - int(float(arg)), 0xf), 0x0)), # got it temp==31 ? 0 : 31-temp
+                        (8, 0x02, 0x00 if float(arg) % 1 < .5 else 0x02)    # got it floatingPint(temp) < .5 ? 0 : 2
+                       ],
     "fan":
     lambda arg="auto": [(7, 0x07, SET_FAN_SPEED[arg])],
 }
@@ -212,7 +214,7 @@ def parse_packet(buf, desc=PROTOCOL):
         res.update(v(buf, k))
     return {prot[0]: res}
 
-
+# bujhe felsi
 def make_packet(payload):
     buf = [0] * (len(payload) + 4)
     buf[0] = 0xbb
@@ -233,5 +235,9 @@ def init_set_cmd():
 
 
 def set(buf, field, val):
+    print("comming from set: ",field,val)
     for res in SET_COMMAND[field](val):
+        print(res)
+        print(buf[res[0]])
         buf[res[0]] = buf[res[0]] & ~res[1] | res[2]
+        print(buf[res[0]])
