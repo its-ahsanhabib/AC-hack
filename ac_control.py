@@ -3,7 +3,7 @@ import paho.mqtt.client as mqtt
 import json
 from proto import parse_packet, init_set_cmd, set, make_packet
 
-MQTTHOST = "192.168.0.1"
+MQTTHOST = "116.204.142.39"
 
 last_cmd = init_set_cmd()
 
@@ -23,9 +23,11 @@ def to_hexlist(int_list):
 
 def set_cmd(arg, val):
     global last_cmd
+    print(last_cmd)
     set(last_cmd, arg, val)
+    print(last_cmd)
     pkt = to_hexlist(make_packet(last_cmd))
-    client.publish("cmnd/AC/SerialSend5", pkt)
+    client.publish("cmnd/tasmota_105624/SerialSend", pkt)
 
 
 def setup_mqtt(rc):
@@ -64,6 +66,7 @@ def setup_mqtt(rc):
     client.subscribe("ac_control/set")
 
     def set_pwr_fn(_a, _b, msg):
+        print("power cmd",msg.payload.decode("utf-8"))
         set_cmd("pwr", msg.payload.decode("utf-8"))
 
     client.message_callback_add("ac_control/set_pwr", set_pwr_fn)
@@ -71,7 +74,7 @@ def setup_mqtt(rc):
 
     def get_fn(_a, _b, msg):
         pkt = to_hexlist(make_packet([4, 2, 1, 0]))
-        client.publish("cmnd/AC/SerialSend5", pkt)
+        client.publish("cmnd/tasmota_105624/SerialSend", pkt)
 
     client.message_callback_add("ac_control/get", get_fn)
     client.subscribe("ac_control/get")
@@ -81,13 +84,13 @@ def setup_mqtt(rc):
         if len(pl) % 2 != 0:  # todo check hex
             return
         pkt = to_hexlist(make_packet(to_intlist(pl)))
-        client.publish("cmnd/AC/SerialSend5", pkt)
+        client.publish("cmnd/tasmota_105624/SerialSend", pkt)
 
     client.message_callback_add("ac_control/custom", custom_fn)
     client.subscribe("ac_control/custom")
 
     def set_temp_fn(_a, _b, msg):
-        set_cmd("temp", msg.payload.decode("utf-8"))
+        set_cmd("temp", msg.payload.decode("utf-8")) # temp numaric
 
     client.message_callback_add("ac_control/set_temp", set_temp_fn)
     client.subscribe("ac_control/set_temp")
@@ -101,7 +104,8 @@ def setup_mqtt(rc):
 
 if __name__ == "__main__":
 
-    client = mqtt.Client()
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
+    client.username_pw_set("ahsan","ahsan")
     client.on_connect = lambda client, userdata, flags, rc: setup_mqtt(rc)
     client.connect(MQTTHOST, 1883, 60)
 
