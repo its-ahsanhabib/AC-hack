@@ -104,7 +104,7 @@ def setup_mqtt(rc):
 
 if __name__ == "__main__":
 
-    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1,"kanak_sla_laptop")
     client.username_pw_set("ahsan","ahsan")
     client.on_connect = lambda client, userdata, flags, rc: setup_mqtt(rc)
     client.connect(MQTTHOST, 1883, 60)
